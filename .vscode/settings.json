@@ -47,7 +47,7 @@
   "terminal.integrated.cursorBlinking": true,
   
   // Python Settings
-  "python.defaultInterpreterPath": "/usr/local/bin/python",
+  "python.defaultInterpreterPath": "C:/Python314/python.exe",
   "python.linting.enabled": true,
   "python.linting.pylintEnabled": true,
   "python.formatting.provider": "black",
