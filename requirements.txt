@@ -1,0 +1,41 @@
+# Core dependencies for agentic development environment
+
+# MCP (Model Context Protocol)
+mcp>=1.0.0
+anthropic>=0.18.0
+
+# Web framework for MCP server
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+httpx>=0.26.0
+
+# Observability
+opentelemetry-api>=1.22.0
+opentelemetry-sdk>=1.22.0
+opentelemetry-instrumentation-fastapi>=0.43b0
+prometheus-client>=0.19.0
+
+# Kubernetes and OpenShift
+kubernetes>=28.1.0
+openshift>=0.13.1
+
+# Data processing
+pyyaml>=6.0.1
+pydantic>=2.5.3
+python-dotenv>=1.0.0
+
+# AI/ML libraries
+langchain>=0.1.0
+langchain-community>=0.0.10
+tiktoken>=0.5.2
+
+# Testing and validation
+pytest>=7.4.4
+pytest-asyncio>=0.23.3
+deepeval>=0.20.0
+
+# Utilities
+click>=8.1.7
+rich>=13.7.0
+python-dateutil>=2.8.2
+requests>=2.31.0

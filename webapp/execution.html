@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Execution - Agentic Environment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .execution-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 500px;
+        }
+
+        .step-container {
+            margin-bottom: 20px;
+        }
+
+        .step {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #e5e7eb;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .step.active {
+            border-left-color: #667eea;
+            background: #e0e7ff;
+        }
+
+        .step.completed {
+            border-left-color: #10b981;
+            background: #d1fae5;
+        }
+
+        .step.error {
+            border-left-color: #ef4444;
+            background: #fee2e2;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .step.completed .step-number {
+            background: #10b981;
+        }
+
+        .step.error .step-number {
+            background: #ef4444;
+        }
+
+        .step-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .step-status {
+            font-size: 1.5em;
+        }
+
+        .step-content {
+            margin-left: 50px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .step-details {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .tool-call {
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .tool-name {
+            font-weight: bold;
+            color: #92400e;
+        }
+
+        .tool-result {
+            background: #dbeafe;
+            border-left: 3px solid #3b82f6;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+
+        .input-prompt {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            animation: pulse 2s infinite;
+        }
+
+        .input-prompt h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .input-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-yes {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-yes:hover {
+            background: #059669;
+            transform: scale(1.05);
+        }
+
+        .btn-no {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-no:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        .btn-input {
+            background: #667eea;
+            color: white;
+            flex: 0 0 auto;
+        }
+
+        .btn-input:hover {
+            background: #5568d3;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .thinking {
+            display: flex;
+            align-items: center;
+            color: #667eea;
+            font-style: italic;
+            margin: 15px 0;
+        }
+
+        .thinking::before {
+            content: "🤔";
+            margin-right: 10px;
+            animation: bounce 1s infinite;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .summary h2 {
+            margin-bottom: 15px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        .back-button {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+        }
+
+        .log-entry {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .log-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .log-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .log-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .log-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="demoTitle">Demo Execution</h1>
+            <div class="subtitle" id="demoSubtitle">Autonomous Agent Workflow</div>
+        </div>
+
+        <div class="execution-panel">
+            <div id="executionContainer">
+                <!-- Steps will be dynamically inserted here -->
+            </div>
+
+            <div id="inputContainer">
+                <!-- Input prompts will appear here -->
+            </div>
+
+            <div id="summaryContainer">
+                <!-- Summary will appear here when complete -->
+            </div>
+        </div>
+
+        <a href="/" class="back-button">← Back to Home</a>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const demoType = urlParams.get('demo');
+        let executionState = {
+            currentStep: 0,
+            steps: [],
+            complete: false
+        };
+
+        // Initialize demo
+        async function initDemo() {
+            if (!demoType) {
+                alert('No demo specified');
+                window.location.href = '/';
+                return;
+            }
+
+            // Set title
+            const demoNames = {
+                'laptop': 'Laptop Refresh Automation',
+                'k8s': 'Kubernetes Diagnostics'
+            };
+            document.getElementById('demoTitle').textContent = demoNames[demoType] || 'Demo';
+
+            // Start execution
+            await executeDemo();
+        }
+
+        // Execute demo
+        async function executeDemo() {
+            const container = document.getElementById('executionContainer');
+            
+            if (demoType === 'laptop') {
+                await executeLaptopDemo();
+            } else if (demoType === 'k8s') {
+                await executeK8sDemo();
+            }
+        }
+
+        // Laptop Refresh Demo
+        async function executeLaptopDemo() {
+            const steps = [
+                {
+                    id: 1,
+                    title: "Query Laptop Refresh Policy",
+                    tool: "query_policy",
+                    args: { policy_type: "laptop_refresh" },
+                    mockResult: {
+                        policy: "Laptop Refresh Policy v2.1",
+                        eligibility: "Employees with laptops > 3 years old",
+                        approval_required: false,
+                        estimated_delivery: "5-7 business days"
+                    }
+                },
+                {
+                    id: 2,
+                    title: "Validate User Eligibility",
+                    description: "Checking if user meets policy requirements",
+                    analysis: "✓ Laptop age: 4.2 years (meets threshold)\n✓ User status: Active employee\n✓ No pending requests\n→ User is ELIGIBLE for laptop refresh"
+                },
+                {
+                    id: 3,
+                    title: "Search Knowledge Base",
+                    tool: "search_documentation",
+                    args: { query: "laptop refresh procedure" },
+                    mockResult: {
+                        found: 3,
+                        documents: [
+                            "Laptop Refresh Standard Operating Procedure",
+                            "Hardware Request Guidelines",
+                            "IT Asset Management Policy"
+                        ]
+                    }
+                },
+                {
+                    id: 4,
+                    title: "Create ServiceNow Ticket",
+                    tool: "create_ticket",
+                    requiresConfirmation: true,
+                    args: {
+                        category: "Hardware Request",
+                        priority: "Medium",
+                        description: "Laptop refresh for eligible employee"
+                    },
+                    mockResult: {
+                        ticket_id: "REQ0012345",
+                        status: "Submitted",
+                        assigned_to: "IT Hardware Team",
+                        created_at: new Date().toISOString()
+                    }
+                },
+                {
+                    id: 5,
+                    title: "Verify Ticket Creation",
+                    description: "Confirming ticket was created successfully",
+                    analysis: "✓ Ticket REQ0012345 created\n✓ Notification sent to user\n✓ Assigned to hardware team\n→ Process complete!"
+                }
+            ];
+
+            await executeSteps(steps);
+        }
+
+        // K8s Diagnostics Demo
+        async function executeK8sDemo() {
+            const steps = [
+                {
+                    id: 1,
+                    title: "List Kubernetes Pods",
+                    tool: "list_pods",
+                    args: { namespace: "default" },
+                    mockResult: {
+                        count: 5,
+                        pods: [
+                            { name: "frontend-xyz", status: "Running", ready: "2/2" },
+                            { name: "backend-service-abc", status: "CrashLoopBackOff", ready: "0/1" },
+                            { name: "database-456", status: "Running", ready: "1/1" },
+                            { name: "cache-789", status: "Running", ready: "1/1" },
+                            { name: "worker-123", status: "Running", ready: "1/1" }
+                        ]
+                    }
+                },
+                {
+                    id: 2,
+                    title: "Identify Failing Pods",
+                    description: "Analyzing pod status for errors",
+                    analysis: "Found 1 pod in failed state:\n• backend-service-abc: CrashLoopBackOff\n→ Investigating root cause..."
+                },
+                {
+                    id: 3,
+                    title: "Fetch Pod Logs",
+                    tool: "get_pod_logs",
+                    args: { namespace: "default", pod_name: "backend-service-abc" },
+                    mockResult: {
+                        logs: "2026-03-01 10:15:23 [ERROR] Failed to connect to database\n2026-03-01 10:15:23 [ERROR] Environment variable DATABASE_URL not set\n2026-03-01 10:15:23 [FATAL] Application startup failed",
+                        line_count: 47
+                    }
+                },
+                {
+                    id: 4,
+                    title: "Describe Pod Configuration",
+                    tool: "describe_resource",
+                    args: { resource_type: "pod", name: "backend-service-abc" },
+                    mockResult: {
+                        image: "backend-app:v2.1.0",
+                        env_vars: ["PORT=8080", "LOG_LEVEL=info"],
+                        restartCount: 12,
+                        lastState: "Terminated (exit code 1)"
+                    }
+                },
+                {
+                    id: 5,
+                    title: "Root Cause Analysis",
+                    description: "Identifying the source of the problem",
+                    analysis: "🔍 Analysis complete:\n\n• Error: DATABASE_URL environment variable missing\n• Impact: Application cannot start\n• Severity: HIGH\n\n→ Missing required configuration"
+                },
+                {
+                    id: 6,
+                    title: "Generate Remediation Plan",
+                    description: "Creating step-by-step fix instructions",
+                    analysis: "📋 Recommended Actions:\n\n1. Add DATABASE_URL to deployment config\n2. Value should point to: postgres://db.internal:5432\n3. Update deployment: kubectl set env deployment/backend DATABASE_URL=...\n4. Verify pod restart and health\n\n→ Estimated fix time: 5 minutes"
+                },
+                {
+                    id: 7,
+                    title: "Create Tracking Ticket",
+                    tool: "create_ticket",
+                    requiresConfirmation: true,
+                    args: {
+                        category: "Incident",
+                        priority: "High",
+                        description: "Pod backend-service-abc failing - missing DATABASE_URL"
+                    },
+                    mockResult: {
+                        ticket_id: "INC0087654",
+                        status: "Open",
+                        assigned_to: "Platform Team",
+                        severity: "High"
+                    }
+                }
+            ];
+
+            await executeSteps(steps);
+        }
+
+        // Execute steps sequentially
+        async function executeSteps(steps) {
+            const container = document.getElementById('executionContainer');
+
+            // Show plan first
+            await showPlan(steps);
+
+            // Ask for confirmation
+            const confirmed = await askConfirmation("Execute this plan?");
+            
+            if (!confirmed) {
+                showMessage("Execution cancelled by user", "warning");
+                return;
+            }
+
+            // Execute each step
+            for (let i = 0; i < steps.length; i++) {
+                const step = steps[i];
+                await executeStep(step, i + 1);
+                await sleep(800); // Small delay between steps
+            }
+
+            // Show summary
+            showSummary(steps);
+        }
+
+        // Show execution plan
+        async function showPlan(steps) {
+            const container = document.getElementById('executionContainer');
+            
+            const planHtml = `
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">📋</div>
+                        <div class="step-title">Task Plan</div>
+                    </div>
+                    <div class="step-content">
+                        <p><strong>${steps.length} steps identified:</strong></p>
+                        <ol style="margin-left: 20px; margin-top: 10px;">
+                            ${steps.map(s => `<li>${s.title}</li>`).join('')}
+                        </ol>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = planHtml;
+            await sleep(1000);
+        }
+
+        // Execute single step
+        async function executeStep(step, stepNum) {
+            const container = document.getElementById('executionContainer');
+            
+            // Add step element
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'step active';
+            stepDiv.id = `step-${stepNum}`;
+            stepDiv.innerHTML = `
+                <div class="step-header">
+                    <div class="step-number">${stepNum}</div>
+                    <div class="step-title">${step.title}</div>
+                    <div class="step-status"><div class="loading"></div></div>
+                </div>
+                <div class="step-content">
+                    <div class="thinking">Agent is working...</div>
+                    <div id="step-${stepNum}-details"></div>
+                </div>
+            `;
+            container.appendChild(stepDiv);
+
+            // Scroll to step
+            stepDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            await sleep(500);
+
+            // Execute tool if needed
+            if (step.tool) {
+                await executeToolCall(stepNum, step.tool, step.args || {}, step.mockResult);
+            } else if (step.description) {
+                const details = document.getElementById(`step-${stepNum}-details`);
+                details.innerHTML = `<div class="log-entry log-info">${step.description}</div>`;
+                await sleep(1000);
+                
+                // Show analysis if available
+                if (step.analysis) {
+                    await sleep(500);
+                    details.innerHTML += `
+                        <div class="tool-result">
+                            <strong>🔍 Analysis:</strong>
+                            <pre style="margin-top: 8px; white-space: pre-wrap;">${step.analysis}</pre>
+                        </div>
+                    `;
+                    await sleep(800);
+                }
+            }
+
+            // Ask for confirmation if required
+            if (step.requiresConfirmation) {
+                const confirmed = await askConfirmation("Proceed with creating the ticket?");
+                if (!confirmed) {
+                    markStepComplete(stepNum, false, "Skipped by user");
+                    return;
+                }
+            }
+
+            // Mark as complete
+            markStepComplete(stepNum, true);
+        }
+
+        // Execute tool call
+        async function executeToolCall(stepNum, toolName, args, mockResult = null) {
+            const details = document.getElementById(`step-${stepNum}-details`);
+            
+            // Show tool call
+            details.innerHTML += `
+                <div class="tool-call">
+                    <div class="tool-name">🔧 Calling: ${toolName}</div>
+                    <pre style="margin-top: 8px; font-size: 0.85em;">${JSON.stringify(args, null, 2)}</pre>
+                </div>
+            `;
+
+            await sleep(800);
+
+            try {
+                let result;
+                
+                // Use mock result if provided, otherwise call real MCP server
+                if (mockResult) {
+                    result = { success: true, data: mockResult };
+                } else {
+                    // Call MCP server
+                    const response = await fetch('http://localhost:3000/execute', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tool_name: toolName,
+                            arguments: args
+                        })
+                    });
+                    result = await response.json();
+                }
+
+                // Show result
+                details.innerHTML += `
+                    <div class="tool-result">
+                        <strong>✅ Result:</strong>
+                        <pre style="margin-top: 8px;">${JSON.stringify(result.data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                details.innerHTML += `
+                    <div class="log-entry log-error">❌ Error: ${error.message}</div>
+                `;
+            }
+
+            await sleep(500);
+        }
+
+        // Mark step as complete
+        function markStepComplete(stepNum, success = true, message = null) {
+            const stepDiv = document.getElementById(`step-${stepNum}`);
+            stepDiv.classList.remove('active');
+            stepDiv.classList.add(success ? 'completed' : 'error');
+            
+            const status = stepDiv.querySelector('.step-status');
+            status.innerHTML = success ? '✅' : '❌';
+
+            const thinking = stepDiv.querySelector('.thinking');
+            if (thinking) thinking.remove();
+
+            if (message) {
+                const details = document.getElementById(`step-${stepNum}-details`);
+                details.innerHTML += `<div class="log-entry log-warning">${message}</div>`;
+            }
+        }
+
+        // Ask for user confirmation
+        function askConfirmation(message) {
+            return new Promise((resolve) => {
+                const inputContainer = document.getElementById('inputContainer');
+                
+                inputContainer.innerHTML = `
+                    <div class="input-prompt">
+                        <h3>🤔 ${message}</h3>
+                        <div class="input-buttons">
+                            <button class="btn btn-yes" onclick="resolveInput(true)">✓ Yes, Proceed</button>
+                            <button class="btn btn-no" onclick="resolveInput(false)">✗ No, Cancel</button>
+                        </div>
+                    </div>
+                `;
+
+                // Store resolver
+                window.currentResolver = resolve;
+            });
+        }
+
+        // Resolve input
+        window.resolveInput = function(value) {
+            if (window.currentResolver) {
+                window.currentResolver(value);
+                window.currentResolver = null;
+                document.getElementById('inputContainer').innerHTML = '';
+            }
+        };
+
+        // Show message
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('executionContainer');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `log-entry log-${type}`;
+            msgDiv.textContent = message;
+            container.appendChild(msgDiv);
+        }
+
+        // Show summary
+        function showSummary(steps) {
+            const summaryContainer = document.getElementById('summaryContainer');
+            
+            summaryContainer.innerHTML = `
+                <div class="summary">
+                    <h2>🎉 Execution Complete!</h2>
+                    <div class="summary-item">
+                        <span>Total Steps:</span>
+                        <span><strong>${steps.length}</strong></span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Completed:</span>
+                        <span><strong>${steps.length}</strong></span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Duration:</span>
+                        <span><strong>~${Math.ceil(steps.length * 2)}s</strong></span>
+                    </div>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
+                        <p>✅ All tasks completed successfully</p>
+                        <p style="margin-top: 10px; opacity: 0.9;">The autonomous agent has finished executing the workflow.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Utility: sleep
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Start demo when page loads
+        document.addEventListener('DOMContentLoaded', initDemo);
+    </script>
+</body>
+</html>

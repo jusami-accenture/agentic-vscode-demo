@@ -1,0 +1,66 @@
+# Prometheus Configuration for Agentic Workflow Monitoring
+# Monitors MCP server, agent performance, and inference metrics
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'agentic-demo'
+    environment: 'development'
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  # - "alerts/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # MCP Server metrics
+  - job_name: 'mcp-server'
+    static_configs:
+      - targets: ['localhost:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Agent orchestrator metrics
+  - job_name: 'agent-orchestrator'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node exporter (system metrics)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  # vLLM inference server (when available)
+  - job_name: 'vllm-inference'
+    static_configs:
+      - targets: ['inference-server:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    # High frequency for inference metrics
+
+  # KV Cache routing metrics
+  - job_name: 'kv-cache-router'
+    static_configs:
+      - targets: ['epp-service:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+# Remote write configuration (for long-term storage)
+# remote_write:
+#   - url: "http://thanos-receiver:19291/api/v1/receive"

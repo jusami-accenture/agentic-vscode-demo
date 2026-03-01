@@ -1,0 +1,140 @@
+{
+  // ========================================
+  // VS Code Settings Optimized for Demos
+  // Based on Functional Specification
+  // ========================================
+
+  // Cursor Visibility - Makes cursor easier to track for audience
+  "editor.cursorStyle": "block",
+  "editor.cursorBlinking": "expand",
+  
+  // High Contrast Cursor - Visible across different themes
+  "workbench.colorCustomizations": {
+    "editorCursor.foreground": "#ff0000",
+    "terminalCursor.foreground": "#ff0000"
+  },
+  
+  // Font Sizes - Readable on projectors and small screens
+  "editor.fontSize": 18,
+  "terminal.integrated.fontSize": 16,
+  "markdown.preview.fontSize": 16,
+  "debug.console.fontSize": 16,
+  
+  // Reduce Noise - Prevent distracting tooltips during live coding
+  "editor.hover.enabled": "off",
+  "editor.hover.delay": 1000,
+  "editor.parameterHints.enabled": false,
+  
+  // Line Numbers and Whitespace
+  "editor.lineNumbers": "on",
+  "editor.renderWhitespace": "none",
+  "editor.renderLineHighlight": "all",
+  
+  // Scrolling - Smooth scrolling for better viewing experience
+  "editor.smoothScrolling": true,
+  "workbench.list.smoothScrolling": true,
+  "terminal.integrated.smoothScrolling": true,
+  
+  // Minimap - Disable for cleaner view
+  "editor.minimap.enabled": false,
+  
+  // Breadcrumbs - Useful for navigation context
+  "breadcrumbs.enabled": true,
+  
+  // Terminal Configuration
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.cursorStyle": "block",
+  "terminal.integrated.cursorBlinking": true,
+  
+  // Python Settings
+  "python.defaultInterpreterPath": "/usr/local/bin/python",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.formatting.provider": "black",
+  "python.analysis.typeCheckingMode": "basic",
+  
+  // File Associations
+  "files.associations": {
+    "*.yaml": "yaml",
+    "*.yml": "yaml",
+    "Dockerfile*": "dockerfile",
+    "*.md": "markdown"
+  },
+  
+  // Auto Save - Useful for demos to avoid unsaved changes
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 2000,
+  
+  // Git Configuration
+  "git.enabled": true,
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "scm.diffDecorations": "all",
+  
+  // Workspace Trust - Auto-trust for demo environment
+  "security.workspace.trust.enabled": false,
+  
+  // Zen Mode Settings - For focused presentations
+  "zenMode.fullScreen": false,
+  "zenMode.centerLayout": true,
+  "zenMode.hideLineNumbers": false,
+  
+  // Copilot Settings
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": true,
+    "plaintext": false,
+    "markdown": true,
+    "python": true
+  },
+  
+  // Editor Suggestions
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": false
+  },
+  
+  // Telemetry - Disable for demos
+  "telemetry.telemetryLevel": "off",
+  
+  // Notifications - Reduce interruptions
+  "window.enableMenuBarMnemonics": false,
+  
+  // OpenShift Extension Settings
+  "openshiftConnector.showChannelOnOutput": false,
+  
+  // Kubernetes Settings
+  "vs-kubernetes": {
+    "vs-kubernetes.crd-code-completion": "enabled"
+  },
+  
+  // YAML Language Server
+  "yaml.schemas": {
+    "kubernetes": "/*.yaml"
+  },
+  "yaml.format.enable": true,
+  
+  // Markdown Settings
+  "markdown.preview.scrollPreviewWithEditor": true,
+  "markdown.preview.markEditorSelection": true,
+  
+  // Search Settings
+  "search.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.venv": true,
+    "**/venv": true
+  },
+  
+  // Files to Watch
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/__pycache__/**": true,
+    "**/.venv/**": true
+  }
+}

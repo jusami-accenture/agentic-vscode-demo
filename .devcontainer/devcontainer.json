@@ -1,0 +1,154 @@
+{
+  "name": "Agentic Development Environment",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  
+  // Security: Run as non-root user
+  "remoteUser": "vscode",
+  "containerUser": "vscode",
+  
+  // Security: Hardened container settings
+  "runArgs": [
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges"
+  ],
+  
+  // Container environment configuration
+  "containerEnv": {
+    "PYTHONUNBUFFERED": "1",
+    "OPENSHIFT_AI_DEMO": "true",
+    "MCP_SERVER_PORT": "3000"
+  },
+  
+  // VS Code settings and extensions
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // Python configuration
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black",
+        
+        // Terminal configuration
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash",
+            "icon": "terminal-bash"
+          }
+        },
+        
+        // Editor settings optimized for demos (see .vscode/settings.json)
+        "editor.fontSize": 14,
+        "terminal.integrated.fontSize": 14,
+        
+        // Git configuration
+        "git.enabled": true,
+        "git.autofetch": true
+      },
+      
+      "extensions": [
+        // Python development
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        
+        // OpenShift and Kubernetes
+        "redhat.vscode-openshift-connector",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        
+        // YAML and JSON
+        "redhat.vscode-yaml",
+        "redhat.vscode-xml",
+        
+        // Docker
+        "ms-azuretools.vscode-docker",
+        
+        // AI and Copilot
+        "github.copilot",
+        "github.copilot-chat",
+        
+        // Observability and monitoring
+        "humao.rest-client",
+        
+        // Markdown and documentation
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint"
+      ]
+    }
+  },
+  
+  // Port forwarding for services
+  "forwardPorts": [
+    3000,  // MCP Server
+    9090,  // Prometheus
+    3001,  // Grafana
+    8080   // Demo application
+  ],
+  
+  "portsAttributes": {
+    "3000": {
+      "label": "MCP Server",
+      "onAutoForward": "notify"
+    },
+    "9090": {
+      "label": "Prometheus",
+      "onAutoForward": "silent"
+    },
+    "3001": {
+      "label": "Grafana",
+      "onAutoForward": "silent"
+    },
+    "8080": {
+      "label": "Demo App",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  
+  // Lifecycle hooks
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "echo '🚀 Agentic Development Environment Ready!'",
+  
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": false,
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableNonRootDocker": "true"
+    },
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "latest",
+      "helm": "latest",
+      "minikube": "none"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12",
+      "installTools": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    }
+  },
+  
+  // Mount configuration (if needed)
+  "mounts": [
+    // Mount Docker socket for Docker-in-Docker access
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  
+  // Workspace folder inside container
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+}

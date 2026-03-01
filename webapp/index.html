@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Development Environment - Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .status-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: slideDown 0.6s ease-out;
+        }
+
+        .status-item {
+            display: inline-block;
+            margin: 10px 20px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+        }
+
+        .status-running {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-stopped {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status-error {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            animation: fadeIn 1s ease-in;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .demo-card.expanded {
+            grid-column: 1 / -1;
+        }
+
+        .demo-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .demo-icon {
+            font-size: 3em;
+            margin-right: 20px;
+        }
+
+        .demo-title h2 {
+            font-size: 1.8em;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .demo-title .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            background: #e0e7ff;
+            color: #667eea;
+        }
+
+        .demo-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .features-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #555;
+        }
+
+        .features-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .steps-section {
+            display: none;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .steps-section.visible {
+            display: block;
+        }
+
+        .steps-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: start;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .info-panel {
+            background: #e0e7ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .info-panel h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #555;
+        }
+
+        .info-label {
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 50px;
+            padding: 20px;
+            opacity: 0.9;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideDown 0.5s ease-out;
+            max-width: 400px;
+        }
+
+        .notification.success {
+            border-left: 5px solid #10b981;
+        }
+
+        .notification.error {
+            border-left: 5px solid #ef4444;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Agentic Development Environment</h1>
+            <p>Production-Ready AI Agent Demonstrations</p>
+        </div>
+
+        <div class="status-bar">
+            <div style="text-align: center;">
+                <h3 style="margin-bottom: 15px; color: #667eea;">System Status</h3>
+                <div id="statusContainer">
+                    <div class="loading"></div>
+                    <span style="margin-left: 10px;">Checking services...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content" id="demosContainer">
+            <!-- Demo cards will be inserted here -->
+        </div>
+
+        <div class="footer">
+            <p><strong>Agentic Development Environment v1.0.0</strong></p>
+            <p>Showcasing Autonomous AI Agents • Model Context Protocol • Security-First Design</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Built with FastAPI • Python • Modern Web Technologies
+            </p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content" id="modalContent">
+            <!-- Modal content will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        let currentExpandedCard = null;
+        let mcpServerRunning = false;
+
+        // Check system status
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                const container = document.getElementById('statusContainer');
+                container.innerHTML = '';
+                
+                data.statuses.forEach(status => {
+                    const statusClass = `status-${status.status}`;
+                    const statusText = status.status === 'running' ? '🟢 Running' : 
+                                     status.status === 'stopped' ? '🔴 Stopped' : '🟡 Error';
+                    
+                    container.innerHTML += `
+                        <div class="status-item ${statusClass}">
+                            ${status.service}: ${statusText}
+                        </div>
+                    `;
+                    
+                    if (status.service === 'MCP Server') {
+                        mcpServerRunning = status.status === 'running';
+                    }
+                });
+                
+                // Update all launch buttons
+                updateLaunchButtons();
+                
+                if (!mcpServerRunning) {
+                    container.innerHTML += `
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="startMCPServer()" style="max-width: 300px;">
+                                Start MCP Server
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to check status:', error);
+            }
+        }
+
+        // Update launch button states
+        function updateLaunchButtons() {
+            document.querySelectorAll('[data-launch-btn]').forEach(btn => {
+                if (mcpServerRunning) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                }
+            });
+        }
+
+        // Start MCP Server
+        async function startMCPServer() {
+            showNotification('Starting MCP Server...', 'info');
+            
+            try {
+                const response = await fetch('/api/start-mcp', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.status === 'started' || data.status === 'already_running') {
+                    showNotification('MCP Server is running!', 'success');
+                    mcpServerRunning = true;
+                    updateLaunchButtons();
+                    setTimeout(checkStatus, 2000);
+                } else {
+                    showNotification('Failed to start MCP Server: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error starting MCP Server: ' + error.message, 'error');
+            }
+        }
+
+        // Load available demos
+        async function loadDemos() {
+            try {
+                const response = await fetch('/api/demos');
+                const data = await response.json();
+                
+                const container = document.getElementById('demosContainer');
+                container.innerHTML = '';
+                
+                data.demos.forEach(demo => {
+                    const card = createDemoCard(demo);
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Failed to load demos:', error);
+            }
+        }
+
+        // Create demo card
+        function createDemoCard(demo) {
+            const card = document.createElement('div');
+            card.className = 'demo-card';
+            card.id = `demo-${demo.id}`;
+            
+            const icon = demo.id === 'laptop' ? '💻' : '☸️';
+            
+            card.innerHTML = `
+                <div class="demo-header">
+                    <div class="demo-icon">${icon}</div>
+                    <div class="demo-title">
+                        <h2>${demo.name}</h2>
+                        <span class="badge">${demo.difficulty}</span>
+                        <span class="badge" style="margin-left: 5px;">⏱️ ${demo.duration}</span>
+                    </div>
+                </div>
+                
+                <div class="demo-description">
+                    ${demo.description}
+                </div>
+                
+                <ul class="features-list">
+                    ${demo.features.map(feature => `<li>${feature}</li>`).join('')}
+                </ul>
+                
+                <div class="info-panel">
+                    <h3>Quick Info</h3>
+                    <div class="info-item">
+                        <span class="info-label">Duration:</span>
+                        <span>${demo.duration}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Level:</span>
+                        <span>${demo.difficulty}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Steps:</span>
+                        <span>${demo.steps.length}</span>
+                    </div>
+                </div>
+                
+                <div class="steps-section" id="steps-${demo.id}">
+                    <div class="steps-title">📋 Execution Steps</div>
+                    ${demo.steps.map((step, index) => `
+                        <div class="step-item">
+                            <div class="step-number">${index + 1}</div>
+                            <div class="step-content">${step}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="toggleSteps('${demo.id}')">
+                        <span id="toggle-text-${demo.id}">Show Steps</span>
+                    </button>
+                    <button class="btn btn-primary" data-launch-btn onclick="launchDemo('${demo.id}', '${demo.name}')" 
+                            ${!mcpServerRunning ? 'disabled' : ''}>
+                        🚀 Launch Demo
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Toggle steps visibility
+        function toggleSteps(demoId) {
+            const stepsSection = document.getElementById(`steps-${demoId}`);
+            const toggleText = document.getElementById(`toggle-text-${demoId}`);
+            const card = document.getElementById(`demo-${demoId}`);
+            
+            if (stepsSection.classList.contains('visible')) {
+                stepsSection.classList.remove('visible');
+                toggleText.textContent = 'Show Steps';
+                card.classList.remove('expanded');
+            } else {
+                // Hide other expanded cards
+                document.querySelectorAll('.steps-section.visible').forEach(section => {
+                    section.classList.remove('visible');
+                });
+                document.querySelectorAll('.demo-card.expanded').forEach(c => {
+                    c.classList.remove('expanded');
+                });
+                document.querySelectorAll('[id^="toggle-text-"]').forEach(text => {
+                    text.textContent = 'Show Steps';
+                });
+                
+                // Show this one
+                stepsSection.classList.add('visible');
+                toggleText.textContent = 'Hide Steps';
+                card.classList.add('expanded');
+            }
+        }
+
+        // Launch demo
+        async function launchDemo(demoId, demoName) {
+            if (!mcpServerRunning) {
+                showNotification('Please start the MCP Server first', 'error');
+                return;
+            }
+            
+            // Open execution page in new window
+            const width = 1200;
+            const height = 800;
+            const left = (screen.width - width) / 2;
+            const top = (screen.height - height) / 2;
+            
+            window.open(
+                `/execution?demo=${demoId}`,
+                `demo-${demoId}`,
+                `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+            );
+            
+            showNotification(`${demoName} launched! Opening execution window...`, 'success');
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const existing = document.querySelector('.notification');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <strong>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</strong>
+                <p style="margin-top: 10px;">${message}</p>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.5s ease-out';
+                setTimeout(() => notification.remove(), 500);
+            }, 4000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkStatus();
+            loadDemos();
+            
+            // Refresh status every 10 seconds
+            setInterval(checkStatus, 10000);
+        });
+
+        // Close modal on overlay click
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'modalOverlay') {
+                e.target.classList.remove('visible');
+            }
+        });
+    </script>
+</body>
+</html>
