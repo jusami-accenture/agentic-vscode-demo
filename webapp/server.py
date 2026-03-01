@@ -235,6 +235,88 @@ async def get_demo_info():
     ]
     return {"demos": demos}
 
+@app.get("/api/metrics")
+async def get_metrics():
+    """Get observability metrics for the running demo"""
+    import time
+    import random
+    
+    # Simulate real-time metrics that would come from Prometheus
+    current_time = time.time()
+    
+    metrics = {
+        "timestamp": datetime.now().isoformat(),
+        "service": "agentic-orchestrator",
+        "version": "1.0.0",
+        
+        # Task execution metrics
+        "tasks": {
+            "total_executed": random.randint(145, 165),
+            "currently_running": 1,
+            "success_count": random.randint(138, 142),
+            "failed_count": random.randint(3, 7),
+            "success_rate": round(random.uniform(95.5, 97.5), 2),
+            "avg_duration_ms": random.randint(2800, 3200),
+            "p95_duration_ms": random.randint(4200, 4800),
+            "p99_duration_ms": random.randint(5500, 6200)
+        },
+        
+        # Tool execution metrics
+        "tools": {
+            "total_calls": random.randint(580, 620),
+            "active_calls": random.randint(0, 2),
+            "avg_latency_ms": random.randint(145, 185),
+            "p95_latency_ms": random.randint(320, 380),
+            "error_rate": round(random.uniform(0.5, 2.5), 2),
+            "by_category": {
+                "kubernetes": random.randint(220, 250),
+                "servicenow": random.randint(180, 200),
+                "knowledge_base": random.randint(160, 180)
+            }
+        },
+        
+        # System metrics
+        "system": {
+            "cpu_usage_percent": round(random.uniform(12.5, 28.5), 1),
+            "memory_usage_mb": random.randint(145, 185),
+            "active_connections": random.randint(3, 8),
+            "http_requests_total": random.randint(1200, 1400),
+            "http_request_duration_ms": random.randint(25, 65)
+        },
+        
+        # Tracing metrics
+        "traces": {
+            "spans_created": random.randint(2800, 3200),
+            "spans_exported": random.randint(2750, 3150),
+            "active_traces": random.randint(1, 3),
+            "avg_span_duration_ms": random.randint(180, 240)
+        },
+        
+        # Recent operations (for activity log)
+        "recent_operations": [
+            {
+                "timestamp": (datetime.now()).strftime("%H:%M:%S"),
+                "operation": "tool.execute.list_pods",
+                "duration_ms": random.randint(120, 180),
+                "status": "success"
+            },
+            {
+                "timestamp": (datetime.now()).strftime("%H:%M:%S"),
+                "operation": "tool.execute.query_policy",
+                "duration_ms": random.randint(95, 145),
+                "status": "success"
+            },
+            {
+                "timestamp": (datetime.now()).strftime("%H:%M:%S"),
+                "operation": "task.decompose",
+                "duration_ms": random.randint(45, 85),
+                "status": "success"
+            }
+        ]
+    }
+    
+    return metrics
+
 if __name__ == "__main__":
     logger.info("Starting Agentic Development Environment Web Interface...")
     logger.info("Web UI will be available at: http://localhost:8080")
