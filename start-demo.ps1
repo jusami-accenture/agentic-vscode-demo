@@ -3,7 +3,7 @@
 
 param(
     [Parameter(Position=0)]
-    [ValidateSet("server", "laptop", "k8s", "observability", "all", "webapp", "stop", "help")]
+    [ValidateSet("server", "laptop", "k8s", "observability", "all", "webapp", "docker", "stop", "help")]
     [string]$Mode = "help"
 )
 
@@ -243,28 +243,26 @@ function Stop-All {
 
 function Show-Help {
     Write-Banner
-    Write-Host "Usage: .\start-demo.ps1 [option]" -ForegroundColor Yellow
+    Write-Host "🎯 PRODUCTION MODE (Recommended):" -ForegroundColor Green
+    Write-Host "  docker       - Start full containerized platform with OpenShift AI" -ForegroundColor Cyan
+    Write-Host "                 See: .\start-docker.ps1 help" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "Options:" -ForegroundColor Green
-    Write-Host "  server         Start MCP server only" -ForegroundColor Cyan
-    Write-Host "  webapp         Start web interface (http://localhost:8080)" -ForegroundColor Cyan
-    Write-Host "  laptop         Run laptop refresh demo" -ForegroundColor Cyan
-    Write-Host "  k8s            Run Kubernetes diagnostics demo" -ForegroundColor Cyan
-    Write-Host "  observability  Start monitoring stack (Prometheus, Grafana, Jaeger)" -ForegroundColor Cyan
-    Write-Host "  all            Start everything" -ForegroundColor Cyan
-    Write-Host "  stop           Stop all running processes" -ForegroundColor Cyan
-    Write-Host "  help           Show this help" -ForegroundColor Cyan
+    Write-Host "🛠️  DEVELOPMENT MODE:" -ForegroundColor Yellow
+    Write-Host "  server       - Start MCP server only" -ForegroundColor Cyan
+    Write-Host "  laptop       - Run laptop refresh demo" -ForegroundColor Cyan
+    Write-Host "  k8s          - Run Kubernetes diagnostics demo" -ForegroundColor Cyan
+    Write-Host "  all          - Start MCP server + observability stack" -ForegroundColor Cyan
+    Write-Host "  observability - Start only observability stack" -ForegroundColor Cyan
+    Write-Host "  webapp       - Start web interface" -ForegroundColor Cyan
+    Write-Host "  stop         - Stop all background services" -ForegroundColor Cyan
+    Write-Host "  help         - Show this help message" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Examples:" -ForegroundColor Green
-    Write-Host "  .\start-demo.ps1 server          # Start MCP server" -ForegroundColor Gray
-    Write-Host "  .\start-demo.ps1 laptop          # Run laptop demo" -ForegroundColor Gray
-    Write-Host "  .\start-demo.ps1 all             # Start complete environment" -ForegroundColor Gray
+    Write-Host "Examples:" -ForegroundColor Magenta
+    Write-Host "  .\start-demo.ps1 docker             # 🐳 Full containerized stack (RECOMMENDED)" -ForegroundColor Gray
+    Write-Host "  .\start-demo.ps1 all                # Start local dev environment" -ForegroundColor Gray
+    Write-Host "  .\start-demo.ps1 laptop             # Run IT automation demo" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "Manual Commands:" -ForegroundColor Green
-    Write-Host "  python mcp-server/server.py               # Start MCP server" -ForegroundColor Gray
-    Write-Host "  python examples/laptop_refresh.py         # Laptop demo" -ForegroundColor Gray
-    Write-Host "  python examples/k8s_diagnostics.py        # K8s demo" -ForegroundColor Gray
-    Write-Host "  python agent/orchestrator.py --help       # Agent help" -ForegroundColor Gray
+    Write-Host "💡 Tip: Use Docker mode for the full production experience!" -ForegroundColor Yellow
     Write-Host ""
 }
 
@@ -300,6 +298,16 @@ try {
         "all" {
             Test-Dependencies
             StartAll
+        }
+        "docker" {
+            Write-Banner
+            Write-Info "Starting Docker-based platform..."
+            Write-Host ""
+            Write-Host "For full Docker management, use:" -ForegroundColor Yellow
+            Write-Host "  .\start-docker.ps1 up       # Start all containers" -ForegroundColor Cyan
+            Write-Host "  .\start-docker.ps1 help     # See all commands" -ForegroundColor Cyan
+            Write-Host ""
+            & ".\start-docker.ps1" "up"
         }
         default {
             Show-Help

@@ -1,0 +1,322 @@
+# Multi-Agent Architecture with OpenShift AI Integration
+# Demonstrates containerized agents with shared inference server
+
+version: '3.8'
+
+networks:
+  agent-network:
+    driver: bridge
+  monitoring:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  inference-cache:
+
+services:
+  # =========================================================================
+  # INFERENCE LAYER - OpenShift AI Compatible
+  # =========================================================================
+  
+  inference-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.inference
+    container_name: inference-server
+    hostname: inference-server
+    ports:
+      - "8080:8080"
+    environment:
+      - MODEL_NAME=llama-3-8b-instruct
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - inference-cache:/app/cache
+    networks:
+      - agent-network
+      - monitoring
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  # =========================================================================
+  # TOOL & RESOURCE LAYER - MCP Server
+  # =========================================================================
+  
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp-server
+    container_name: mcp-server
+    hostname: mcp-server
+    ports:
+      - "3000:3000"
+    environment:
+      - MCP_PORT=3000
+      - PYTHONUNBUFFERED=1
+      - JAEGER_ENDPOINT=http://jaeger:4318
+    networks:
+      - agent-network
+      - monitoring
+    depends_on:
+      - inference-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # =========================================================================
+  # ORCHESTRATION LAYER - Main Orchestrator
+  # =========================================================================
+  
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator
+    container_name: orchestrator
+    hostname: orchestrator
+    ports:
+      - "8001:8001"
+    environment:
+      - MCP_SERVER_URL=http://mcp-server:3000
+      - INFERENCE_SERVER_URL=http://inference-server:8080
+      - PYTHONUNBUFFERED=1
+      - JAEGER_ENDPOINT=http://jaeger:4318
+    networks:
+      - agent-network
+      - monitoring
+    depends_on:
+      - mcp-server
+      - inference-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # =========================================================================
+  # AGENT LAYER - Specialized Agents (Each in Own Container)
+  # =========================================================================
+  
+  it-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.it-agent
+    container_name: it-agent
+    hostname: it-agent
+    ports:
+      - "8002:8002"
+    environment:
+      - AGENT_TYPE=it_specialist
+      - MCP_SERVER_URL=http://mcp-server:3000
+      - INFERENCE_SERVER_URL=http://inference-server:8080
+      - ORCHESTRATOR_URL=http://orchestrator:8001
+      - PYTHONUNBUFFERED=1
+    networks:
+      - agent-network
+      - monitoring
+    depends_on:
+      - orchestrator
+      - mcp-server
+      - inference-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      - "agent.type=specialist"
+      - "agent.specialization=it_automation"
+      - "agent.capabilities=servicenow,policy_validation"
+
+  k8s-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.k8s-agent
+    container_name: k8s-agent
+    hostname: k8s-agent
+    ports:
+      - "8003:8003"
+    environment:
+      - AGENT_TYPE=k8s_specialist
+      - MCP_SERVER_URL=http://mcp-server:3000
+      - INFERENCE_SERVER_URL=http://inference-server:8080
+      - ORCHESTRATOR_URL=http://orchestrator:8001
+      - PYTHONUNBUFFERED=1
+    networks:
+      - agent-network
+      - monitoring
+    depends_on:
+      - orchestrator
+      - mcp-server
+      - inference-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      - "agent.type=specialist"
+      - "agent.specialization=kubernetes"
+      - "agent.capabilities=diagnostics,log_analysis"
+
+  # =========================================================================
+  # OBSERVABILITY LAYER
+  # =========================================================================
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./observability/grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  # =========================================================================
+  # WEB INTERFACE
+  # =========================================================================
+  
+  webapp:
+    image: python:3.12-slim
+    container_name: webapp
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./webapp:/app
+    command: python -m http.server 8000
+    networks:
+      - agent-network
+      - monitoring
+    depends_on:
+      - orchestrator
+    restart: unless-stopped
+
+# Architecture Overview:
+# ═══════════════════════════════════════════════════════════════════════
+#
+#  ┌─────────────────────────────────────────────────────────────────┐
+#  │                    INFERENCE LAYER                              │
+#  │  ┌───────────────────────────────────────────────────────────┐  │
+#  │  │   OpenShift AI Inference Server (Port 8080)               │  │
+#  │  │   Model: llama-3-8b-instruct                              │  │
+#  │  │   Provider: vLLM / OpenShift AI Runtime                   │  │
+#  │  └───────────────────────────────────────────────────────────┘  │
+#  └─────────────────────────────────────────────────────────────────┘
+#                              ↑
+#                              │ LLM Requests
+#                              │
+#  ┌─────────────────────────────────────────────────────────────────┐
+#  │                  ORCHESTRATION LAYER                            │
+#  │  ┌──────────────────────┐         ┌────────────────────────┐   │
+#  │  │  Orchestrator        │←───────→│  MCP Server            │   │
+#  │  │  (Port 8001)         │         │  (Port 3000)           │   │
+#  │  │  - Task Planning     │         │  - Tool Registry       │   │
+#  │  │  - Agent Coordination│         │  - Tool Execution      │   │
+#  │  └──────────────────────┘         └────────────────────────┘   │
+#  └─────────────────────────────────────────────────────────────────┘
+#                              ↑
+#                              │ Task Distribution
+#                  ┌───────────┴───────────┐
+#                  │                       │
+#  ┌───────────────▼────────┐  ┌──────────▼──────────────┐
+#  │   IT Agent              │  │   K8s Agent             │
+#  │   (Port 8002)           │  │   (Port 8003)           │
+#  │   Container 1           │  │   Container 2           │
+#  │   - ServiceNow          │  │   - Pod Diagnostics     │
+#  │   - Policy Validation   │  │   - Log Analysis        │
+#  └─────────────────────────┘  └─────────────────────────┘
+#
+#  ┌─────────────────────────────────────────────────────────────────┐
+#  │                  OBSERVABILITY LAYER                            │
+#  │  Prometheus (9090) | Grafana (3001) | Jaeger (16686)           │
+#  └─────────────────────────────────────────────────────────────────┘
+#
+# ═══════════════════════════════════════════════════════════════════════

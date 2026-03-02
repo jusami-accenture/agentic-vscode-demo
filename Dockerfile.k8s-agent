@@ -1,0 +1,73 @@
+# Dockerfile for Kubernetes Agent
+# Specialized agent for K8s diagnostics and cloud-native operations
+FROM python:3.12-slim
+
+LABEL service="k8s-agent"
+LABEL description="Specialized agent for Kubernetes and OpenShift operations"
+LABEL specialization="kubernetes,openshift,diagnostics,cloud-native"
+
+# Security: Create non-root user
+RUN groupadd -r k8sagent && useradd -r -g k8sagent -u 1003 k8sagent
+
+# Install system dependencies including kubectl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
+    && rm kubectl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY agent/ ./agent/
+COPY examples/k8s_diagnostics.py ./examples/
+COPY observability/ ./observability/
+
+# Create config directory for agent specialization
+RUN mkdir -p /app/config
+COPY <<EOF /app/config/agent_config.json
+{
+  "agent_type": "k8s_specialist",
+  "capabilities": [
+    "pod_diagnostics",
+    "log_analysis",
+    "resource_monitoring",
+    "troubleshooting",
+    "openshift_integration"
+  ],
+  "tools": [
+    "list_pods",
+    "get_pod_logs",
+    "describe_resource",
+    "create_ticket"
+  ],
+  "mcp_server": "http://mcp-server:3000",
+  "inference_server": "http://inference-server:8080"
+}
+EOF
+
+# Set ownership
+RUN chown -R k8sagent:k8sagent /app
+
+# Security: Drop privileges
+USER k8sagent
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1
+ENV AGENT_TYPE=k8s_specialist
+ENV MCP_SERVER_URL=http://mcp-server:3000
+ENV INFERENCE_SERVER_URL=http://inference-server:8080
+
+EXPOSE 8003
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8003/health || exit 1
+
+CMD ["python", "-c", "import asyncio; from examples.k8s_diagnostics import run_k8s_diagnostics; asyncio.run(run_k8s_diagnostics())"]

@@ -1,0 +1,131 @@
+# Dockerfile for OpenShift AI Inference Server
+# Simulates OpenShift AI inference endpoint with vLLM or similar
+FROM python:3.12-slim
+
+LABEL service="inference-server"
+LABEL description="AI inference server compatible with OpenShift AI"
+LABEL model="llama-3-8b-instruct"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install inference dependencies
+RUN pip install --no-cache-dir \
+    fastapi>=0.109.0 \
+    uvicorn[standard]>=0.27.0 \
+    transformers>=4.37.0 \
+    torch>=2.1.0 \
+    accelerate>=0.26.0 \
+    sentencepiece>=0.1.99 \
+    opentelemetry-api>=1.22.0 \
+    opentelemetry-sdk>=1.22.0 \
+    prometheus-client>=0.19.0
+
+# Copy inference server code
+COPY <<EOF /app/inference_server.py
+"""
+OpenShift AI Compatible Inference Server
+Provides OpenAI-compatible API for agent LLM requests
+"""
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
+import time
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="OpenShift AI Inference Server", version="1.0.0")
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    model: str
+    messages: List[Message]
+    temperature: Optional[float] = 0.7
+    max_tokens: Optional[int] = 1024
+
+class ChatResponse(BaseModel):
+    id: str
+    object: str = "chat.completion"
+    created: int
+    model: str
+    choices: List[Dict[str, Any]]
+    usage: Dict[str, int]
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "inference-server"}
+
+@app.get("/v1/models")
+async def list_models():
+    """List available models"""
+    return {
+        "object": "list",
+        "data": [
+            {
+                "id": "llama-3-8b-instruct",
+                "object": "model",
+                "created": int(time.time()),
+                "owned_by": "openshift-ai"
+            }
+        ]
+    }
+
+@app.post("/v1/chat/completions")
+async def chat_completion(request: ChatRequest):
+    """
+    OpenAI-compatible chat completion endpoint
+    In production, this would call actual LLM inference
+    """
+    logger.info(f"Inference request: model={request.model}, messages={len(request.messages)}")
+    
+    # Simulate inference (in production, call actual model)
+    response_content = f"[Inference Response] Processed {len(request.messages)} messages"
+    
+    return ChatResponse(
+        id=f"chatcmpl-{int(time.time())}",
+        created=int(time.time()),
+        model=request.model,
+        choices=[
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": response_content
+                },
+                "finish_reason": "stop"
+            }
+        ],
+        usage={
+            "prompt_tokens": sum(len(m.content.split()) for m in request.messages),
+            "completion_tokens": len(response_content.split()),
+            "total_tokens": sum(len(m.content.split()) for m in request.messages) + len(response_content.split())
+        }
+    )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8080)
+EOF
+
+EXPOSE 8080
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1
+ENV MODEL_NAME=llama-3-8b-instruct
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["python", "inference_server.py"]

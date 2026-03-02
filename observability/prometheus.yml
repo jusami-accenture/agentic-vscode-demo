@@ -21,45 +21,94 @@ rule_files:
 
 # Scrape configurations
 scrape_configs:
-  # MCP Server metrics
+  # ========================================================================
+  # INFERENCE LAYER
+  # ========================================================================
+  
+  # OpenShift AI compatible inference server
+  - job_name: 'inference-server'
+    static_configs:
+      - targets: ['inference-server:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    scrape_timeout: 3s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: layer
+        replacement: 'inference'
+
+  # ========================================================================
+  # ORCHESTRATION LAYER
+  # ========================================================================
+  
+  # MCP Server - Tool execution and resource access
   - job_name: 'mcp-server'
     static_configs:
-      - targets: ['localhost:3000']
+      - targets: ['mcp-server:3000']
     metrics_path: '/metrics'
     scrape_interval: 10s
     scrape_timeout: 5s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: layer
+        replacement: 'orchestration'
 
-  # Agent orchestrator metrics
-  - job_name: 'agent-orchestrator'
+  # Agent Orchestrator - Task coordination
+  - job_name: 'orchestrator'
     static_configs:
-      - targets: ['localhost:8080']
+      - targets: ['orchestrator:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: layer
+        replacement: 'orchestration'
+
+  # ========================================================================
+  # AGENT LAYER - Specialized Agents
+  # ========================================================================
+  
+  # IT Agent - ServiceNow and policy automation
+  - job_name: 'it-agent'
+    static_configs:
+      - targets: ['it-agent:8002']
     metrics_path: '/metrics'
     scrape_interval: 15s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: layer
+        replacement: 'agent'
+      - source_labels: [__address__]
+        target_label: agent_type
+        replacement: 'it_specialist'
 
+  # K8s Agent - Kubernetes diagnostics
+  - job_name: 'k8s-agent'
+    static_configs:
+      - targets: ['k8s-agent:8003']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: layer
+        replacement: 'agent'
+      - source_labels: [__address__]
+        target_label: agent_type
+        replacement: 'k8s_specialist'
+
+  # ========================================================================
+  # OBSERVABILITY
+  # ========================================================================
+  
   # Prometheus self-monitoring
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
   # Node exporter (system metrics)
-  - job_name: 'node'
+  - job_name: 'node-exporter'
     static_configs:
-      - targets: ['localhost:9100']
-
-  # vLLM inference server (when available)
-  - job_name: 'vllm-inference'
-    static_configs:
-      - targets: ['inference-server:8000']
-    metrics_path: '/metrics'
-    scrape_interval: 5s
-    # High frequency for inference metrics
-
-  # KV Cache routing metrics
-  - job_name: 'kv-cache-router'
-    static_configs:
-      - targets: ['epp-service:8080']
-    metrics_path: '/metrics'
-    scrape_interval: 5s
+      - targets: ['node-exporter:9100']
 
 # Remote write configuration (for long-term storage)
 # remote_write:

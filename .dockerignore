@@ -1,0 +1,77 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.log
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Documentation (not needed in container)
+docs/*
+!docs/ARCHITECTURE.md
+README.md
+LICENSE
+GETTING_STARTED.md
+
+# Docker
+.dockerignore
+docker-compose*.yml
+Dockerfile*
+
+# Observability (mounted separately)
+observability/docker-compose.yml
+observability/grafana/
+
+# Development
+.devcontainer/
+.env.local
+.env.development
+*.local
+
+# Cache and temporary files
+.cache/
+tmp/
+temp/
+*.tmp

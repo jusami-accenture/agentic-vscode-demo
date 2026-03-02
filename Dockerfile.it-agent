@@ -1,0 +1,69 @@
+# Dockerfile for IT Agent
+# Specialized agent for IT automation and ServiceNow integration
+FROM python:3.12-slim
+
+LABEL service="it-agent"
+LABEL description="Specialized agent for IT automation tasks"
+LABEL specialization="servicenow,laptop-refresh,policy-validation"
+
+# Security: Create non-root user
+RUN groupadd -r itagent && useradd -r -g itagent -u 1002 itagent
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY agent/ ./agent/
+COPY examples/laptop_refresh.py ./examples/
+COPY observability/ ./observability/
+
+# Create config directory for agent specialization
+RUN mkdir -p /app/config
+COPY <<EOF /app/config/agent_config.json
+{
+  "agent_type": "it_specialist",
+  "capabilities": [
+    "servicenow_integration",
+    "policy_validation",
+    "knowledge_base_search",
+    "ticket_management"
+  ],
+  "tools": [
+    "create_ticket",
+    "get_ticket_status",
+    "query_policy",
+    "search_documentation"
+  ],
+  "mcp_server": "http://mcp-server:3000",
+  "inference_server": "http://inference-server:8080"
+}
+EOF
+
+# Set ownership
+RUN chown -R itagent:itagent /app
+
+# Security: Drop privileges
+USER itagent
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1
+ENV AGENT_TYPE=it_specialist
+ENV MCP_SERVER_URL=http://mcp-server:3000
+ENV INFERENCE_SERVER_URL=http://inference-server:8080
+
+EXPOSE 8002
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8002/health || exit 1
+
+CMD ["python", "-c", "import asyncio; from examples.laptop_refresh import run_laptop_refresh_demo; asyncio.run(run_laptop_refresh_demo())"]
